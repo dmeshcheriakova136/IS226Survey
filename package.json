@@ -1,0 +1,14 @@
+{
+  "name": "ar-glasses-survey",
+  "version": "1.0.0",
+  "description": "Public Speaking Anxiety Survey for AR Coaching Glasses Project",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "express": "^4.21.0"
+  }
+}

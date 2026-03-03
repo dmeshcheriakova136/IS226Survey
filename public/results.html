@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Survey Results — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f8f9fa;
+      color: #202124;
+      padding: 40px 24px;
+    }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .count { color: #5f6368; font-size: 15px; margin-bottom: 32px; }
+    .response-card {
+      background: white;
+      border: 1px solid #e8eaed;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    }
+    .response-card h3 {
+      font-size: 14px;
+      color: #4285F4;
+      margin-bottom: 16px;
+    }
+    .field { margin-bottom: 12px; }
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #9aa0a6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .field-value {
+      font-size: 14px;
+      color: #3c4043;
+      line-height: 1.5;
+    }
+    .tag {
+      display: inline-block;
+      background: #E8F0FE;
+      color: #1a73e8;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      margin: 2px 4px 2px 0;
+    }
+    .empty {
+      text-align: center;
+      padding: 60px;
+      color: #9aa0a6;
+      font-size: 16px;
+    }
+    .refresh-btn {
+      background: #4285F4;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 24px;
+      font-family: inherit;
+    }
+    .refresh-btn:hover { background: #1a73e8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Survey Responses</h1>
+    <div class="count" id="count">Loading...</div>
+    <button class="refresh-btn" onclick="loadResults()">Refresh</button>
+    <div id="results"></div>
+  </div>
+  <script>
+    const labels = {
+      q1_relationship: 'Q1: Relationship with public speaking',
+      q2_thoughts: 'Q2: Thoughts before speaking',
+      q3_body: 'Q3: Physical symptoms',
+      q4_hardest: 'Q4: Two hardest parts',
+      q5_coping: 'Q5: Coping strategies tried',
+      q6_slow_down: 'Q6a: Reminders to slow down/breathe',
+      q6_talking_points: 'Q6b: Talking points display',
+      q6_audience: 'Q6c: Audience reaction read',
+      q6_voice_alert: 'Q6d: Voice shaking alert',
+      q6_calming_cue: 'Q6e: Calming cue',
+      q6_post_summary: 'Q6f: Post-talk summary',
+      q7_magic_fix: 'Q7: Magic fix'
+    };
+
+    function renderTags(jsonStr) {
+      try {
+        const arr = JSON.parse(jsonStr);
+        if (Array.isArray(arr)) return arr.map(v => `<span class="tag">${v}</span>`).join('');
+      } catch {}
+      return `<span>${jsonStr}</span>`;
+    }
+
+    async function loadResults() {
+      const res = await fetch('/api/results');
+      const data = await res.json();
+      document.getElementById('count').textContent = `${data.length} response${data.length !== 1 ? 's' : ''} collected`;
+      const container = document.getElementById('results');
+
+      if (!data.length) {
+        container.innerHTML = '<div class="empty">No responses yet. Share the survey link!</div>';
+        return;
+      }
+
+      container.innerHTML = data.map((r, i) => `
+        <div class="response-card">
+          <h3>Response #${data.length - i} — ${new Date(r.submitted_at).toLocaleString()}</h3>
+          ${Object.entries(labels).map(([key, label]) => `
+            <div class="field">
+              <div class="field-label">${label}</div>
+              <div class="field-value">${
+                key.includes('q2_') || key.includes('q3_') || key.includes('q4_') || key.includes('q5_')
+                  ? renderTags(r[key])
+                  : (r[key] || '<em style="color:#dadce0">—</em>')
+              }</div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    loadResults();
+  </script>
+</body>
+</html>

@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Speaking Survey — AR Coaching Glasses</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', 'Google Sans', system-ui, sans-serif;
+      background: #ffffff;
+      color: #1a1a2e;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── Decorative Blobs ── */
+    .blob {
+      position: fixed;
+      z-index: 0;
+      pointer-events: none;
+      animation: blobFloat 8s ease-in-out infinite;
+    }
+    .blob-1 {
+      width: 180px; height: 180px;
+      background: #4285F4;
+      border-radius: 50%;
+      top: -40px; left: -40px;
+      animation-delay: 0s;
+    }
+    .blob-2 {
+      width: 120px; height: 120px;
+      background: #EA4335;
+      border-radius: 40% 60% 55% 45% / 55% 40% 60% 45%;
+      top: 30px; left: 50%;
+      animation-delay: -2s;
+    }
+    .blob-3 {
+      width: 140px; height: 140px;
+      background: #A259FF;
+      border-radius: 55% 45% 60% 40% / 40% 60% 45% 55%;
+      top: -20px; right: -30px;
+      animation-delay: -4s;
+    }
+    .blob-4 {
+      width: 200px; height: 200px;
+      background: #4285F4;
+      border-radius: 40% 60% 70% 30% / 50% 40% 60% 50%;
+      bottom: 60px; left: -60px;
+      animation-delay: -1s;
+    }
+    .blob-5 {
+      width: 160px; height: 160px;
+      background: #34A853;
+      border-radius: 50% 50% 40% 60% / 60% 40% 50% 50%;
+      bottom: -30px; right: -30px;
+      animation-delay: -3s;
+    }
+    .blob-6 {
+      width: 0; height: 0;
+      border-left: 40px solid transparent;
+      border-right: 40px solid transparent;
+      border-bottom: 70px solid #FBBC04;
+      top: 80px; left: 120px;
+      background: transparent;
+      animation-delay: -5s;
+    }
+    .blob-7 {
+      width: 0; height: 0;
+      border-left: 35px solid transparent;
+      border-right: 35px solid transparent;
+      border-bottom: 60px solid #FBBC04;
+      bottom: 100px; right: 80px;
+      background: transparent;
+      animation-delay: -6s;
+    }
+    .blob-8 {
+      width: 100px; height: 100px;
+      background: #EA4335;
+      border-radius: 30% 70% 50% 50% / 50% 50% 70% 30%;
+      top: 50%; right: -20px;
+      animation-delay: -2.5s;
+    }
+
+    @keyframes blobFloat {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      33% { transform: translateY(-15px) rotate(3deg); }
+      66% { transform: translateY(10px) rotate(-2deg); }
+    }
+
+    /* ── Main Container ── */
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .header .tag {
+      display: inline-block;
+      background: #E8F0FE;
+      color: #4285F4;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+    .header h1 {
+      font-size: 42px;
+      font-weight: 700;
+      color: #1a1a2e;
+      line-height: 1.15;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+    .header p {
+      font-size: 17px;
+      color: #5f6368;
+      line-height: 1.6;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* ── Progress Bar ── */
+    .progress-container {
+      margin-bottom: 40px;
+    }
+    .progress-steps {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .progress-dot {
+      width: 36px;
+      height: 5px;
+      border-radius: 3px;
+      background: #e0e0e0;
+      transition: background 0.5s ease, transform 0.3s ease;
+    }
+    .progress-dot.active {
+      background: #4285F4;
+      transform: scaleY(1.2);
+    }
+    .progress-dot.done {
+      background: #34A853;
+    }
+    .progress-text {
+      text-align: center;
+      font-size: 13px;
+      color: #9aa0a6;
+      font-weight: 500;
+    }
+
+    /* ── Question Slides ── */
+    .slides-wrapper {
+      position: relative;
+      overflow: hidden;
+      min-height: 400px;
+    }
+    .slide {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      opacity: 0;
+      transform: translateX(80px);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      padding: 4px;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+      position: relative;
+    }
+    .slide.exit-left {
+      opacity: 0;
+      transform: translateX(-80px);
+    }
+    .slide.enter-right {
+      opacity: 0;
+      transform: translateX(80px);
+    }
+
+    /* ── Question Card ── */
+    .question-card {
+      background: #ffffff;
+      border: 1.5px solid #e8eaed;
+      border-radius: 20px;
+      padding: 36px 32px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+      transition: box-shadow 0.3s ease;
+    }
+    .question-card:hover {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    }
+    .question-number {
+      font-size: 13px;
+      font-weight: 600;
+      color: #4285F4;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .question-text {
+      font-size: 22px;
+      font-weight: 600;
+      color: #202124;
+      line-height: 1.35;
+      margin-bottom: 8px;
+    }
+    .question-hint {
+      font-size: 14px;
+      color: #9aa0a6;
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+
+    /* ── Option styles ── */
+    .options { display: flex; flex-direction: column; gap: 10px; }
+
+    .option-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      border: 1.5px solid #e8eaed;
+      border-radius: 14px;
+      background: #fafafa;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-size: 15px;
+      color: #3c4043;
+      text-align: left;
+      line-height: 1.4;
+    }
+    .option-btn:hover {
+      border-color: #4285F4;
+      background: #E8F0FE;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(66,133,244,0.15);
+    }
+    .option-btn.selected {
+      border-color: #4285F4;
+      background: #E8F0FE;
+      color: #1a73e8;
+      font-weight: 500;
+    }
+    .option-btn .radio {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 2px solid #dadce0;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s ease;
+    }
+    .option-btn.selected .radio {
+      border-color: #4285F4;
+      background: #4285F4;
+    }
+    .option-btn.selected .radio::after {
+      content: '';
+      width: 8px; height: 8px;
+      background: white;
+      border-radius: 50%;
+    }
+    .option-btn .check {
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      border: 2px solid #dadce0;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s ease;
+    }
+    .option-btn.selected .check {
+      border-color: #4285F4;
+      background: #4285F4;
+    }
+    .option-btn.selected .check::after {
+      content: '✓';
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* ── Likert Grid ── */
+    .likert-grid { display: flex; flex-direction: column; gap: 14px; }
+    .likert-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px;
+      background: #fafafa;
+      border-radius: 14px;
+      border: 1.5px solid #e8eaed;
+      transition: all 0.25s ease;
+    }
+    .likert-row:hover {
+      border-color: #d2e3fc;
+      background: #f8faff;
+    }
+    .likert-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #3c4043;
+    }
+    .likert-options {
+      display: flex;
+      gap: 6px;
+    }
+    .likert-btn {
+      flex: 1;
+      padding: 8px 4px;
+      border: 1.5px solid #e8eaed;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      font-size: 11px;
+      color: #5f6368;
+      text-align: center;
+      transition: all 0.25s ease;
+      line-height: 1.3;
+    }
+    .likert-btn:hover {
+      border-color: #4285F4;
+      background: #E8F0FE;
+    }
+    .likert-btn.selected {
+      border-color: #4285F4;
+      background: #4285F4;
+      color: white;
+      font-weight: 600;
+    }
+
+    /* ── Textarea ── */
+    .open-textarea {
+      width: 100%;
+      min-height: 130px;
+      border: 1.5px solid #e8eaed;
+      border-radius: 14px;
+      padding: 16px;
+      font-family: inherit;
+      font-size: 15px;
+      color: #3c4043;
+      resize: vertical;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      outline: none;
+      background: #fafafa;
+    }
+    .open-textarea:focus {
+      border-color: #4285F4;
+      box-shadow: 0 0 0 3px rgba(66,133,244,0.15);
+      background: white;
+    }
+    .open-textarea::placeholder {
+      color: #bdc1c6;
+    }
+
+    /* ── Navigation Buttons ── */
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 28px;
+      gap: 12px;
+    }
+    .btn {
+      padding: 14px 32px;
+      border-radius: 24px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-back {
+      background: #f1f3f4;
+      color: #5f6368;
+    }
+    .btn-back:hover {
+      background: #e8eaed;
+    }
+    .btn-next {
+      background: #4285F4;
+      color: white;
+      margin-left: auto;
+    }
+    .btn-next:hover {
+      background: #1a73e8;
+      box-shadow: 0 4px 14px rgba(66,133,244,0.35);
+    }
+    .btn-next:disabled {
+      background: #dadce0;
+      color: #9aa0a6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-submit {
+      background: #34A853;
+      color: white;
+      margin-left: auto;
+    }
+    .btn-submit:hover {
+      background: #2d9249;
+      box-shadow: 0 4px 14px rgba(52,168,83,0.35);
+    }
+
+    /* ── Thank You Screen ── */
+    .thank-you {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .thank-you .emoji {
+      font-size: 64px;
+      margin-bottom: 20px;
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .thank-you h2 {
+      font-size: 34px;
+      font-weight: 700;
+      color: #202124;
+      margin-bottom: 12px;
+    }
+    .thank-you p {
+      font-size: 17px;
+      color: #5f6368;
+      line-height: 1.6;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .header h1 { font-size: 30px; }
+      .question-text { font-size: 19px; }
+      .question-card { padding: 24px 20px; }
+      .container { padding: 24px 16px 40px; }
+      .likert-btn { font-size: 10px; padding: 6px 2px; }
+      .blob-1 { width: 120px; height: 120px; }
+      .blob-2 { width: 80px; height: 80px; }
+      .blob-3 { width: 100px; height: 100px; }
+      .blob-4 { width: 140px; height: 140px; }
+      .blob-5 { width: 100px; height: 100px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative Blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+  <div class="blob blob-5"></div>
+  <div class="blob blob-6"></div>
+  <div class="blob blob-7"></div>
+  <div class="blob blob-8"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header" id="surveyHeader">
+      <div class="tag">UIUC Spring 2026 Research</div>
+      <h1>Help us redesign public speaking</h1>
+      <p>We're building AR glasses that help people feel confident presenting. This 3-minute survey shapes what we create. No wrong answers!</p>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-steps" id="progressSteps"></div>
+      <div class="progress-text" id="progressText">Question 1 of 7</div>
+    </div>
+
+    <!-- Slides -->
+    <div class="slides-wrapper" id="slidesWrapper">
+
+      <!-- Q1 -->
+      <div class="slide active" data-slide="0">
+        <div class="question-card">
+          <div class="question-number">Question 1</div>
+          <div class="question-text">How would you describe your relationship with public speaking?</div>
+          <div class="question-hint">Pick the one that feels most like you</div>
+          <div class="options" id="q1-options">
+            <button class="option-btn" data-value="enjoy" onclick="selectSingle('q1', this)">
+              <span class="radio"></span> I actually enjoy it most of the time
+            </button>
+            <button class="option-btn" data-value="fine" onclick="selectSingle('q1', this)">
+              <span class="radio"></span> It's fine — I can handle it when I need to
+            </button>
+            <button class="option-btn" data-value="nervous" onclick="selectSingle('q1', this)">
+              <span class="radio"></span> I get nervous, but I push through
+            </button>
+            <button class="option-btn" data-value="avoid" onclick="selectSingle('q1', this)">
+              <span class="radio"></span> I actively avoid it whenever I can
+            </button>
+            <button class="option-btn" data-value="fear" onclick="selectSingle('q1', this)">
+              <span class="radio"></span> It's one of my biggest fears, honestly
+            </button>
+          </div>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-next" id="next-0" disabled onclick="goNext()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="slide" data-slide="1">
+        <div class="question-card">
+          <div class="question-number">Question 2</div>
+          <div class="question-text">Think about the last time you spoke in front of people. What was going through your mind right before?</div>
+          <div class="question-hint">Pick all that apply</div>
+          <div class="options" id="q2-options">
+            <button class="option-btn" data-value="forget" onclick="selectMulti('q2', this)">
+              <span class="check"></span> "What if I forget what I'm supposed to say?"
+            </button>
+            <button class="option-btn" data-value="notice_nervous" onclick="selectMulti('q2', this)">
+              <span class="check"></span> "Everyone's going to notice how nervous I am"
+            </button>
+            <button class="option-btn" data-value="mess_up" onclick="selectMulti('q2', this)">
+              <span class="check"></span> "I'm going to mess up and look stupid"
+            </button>
+            <button class="option-btn" data-value="not_prepared" onclick="selectMulti('q2', this)">
+              <span class="check"></span> "I don't know this material well enough"
+            </button>
+            <button class="option-btn" data-value="heart_racing" onclick="selectMulti('q2', this)">
+              <span class="check"></span> "I can feel my heart racing and I can't calm down"
+            </button>
+            <button class="option-btn" data-value="want_over" onclick="selectMulti('q2', this)">
+              <span class="check"></span> "I just want this to be over"
+            </button>
+          </div>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-back" onclick="goBack()">Back</button>
+          <button class="btn btn-next" id="next-1" disabled onclick="goNext()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="slide" data-slide="2">
+        <div class="question-card">
+          <div class="question-number">Question 3</div>
+          <div class="question-text">When you're anxious about speaking, what does your body actually do?</div>
+          <div class="question-hint">Pick all that apply</div>
+          <div class="options" id="q3-options">
+            <button class="option-btn" data-value="voice_shakes" onclick="selectMulti('q3', this)">
+              <span class="check"></span> My voice shakes or cracks
+            </button>
+            <button class="option-btn" data-value="hands_tremble" onclick="selectMulti('q3', this)">
+              <span class="check"></span> My hands tremble
+            </button>
+            <button class="option-btn" data-value="sweating" onclick="selectMulti('q3', this)">
+              <span class="check"></span> I start sweating
+            </button>
+            <button class="option-btn" data-value="mind_blank" onclick="selectMulti('q3', this)">
+              <span class="check"></span> My mind goes completely blank
+            </button>
+            <button class="option-btn" data-value="talk_fast" onclick="selectMulti('q3', this)">
+              <span class="check"></span> I talk way too fast without realizing it
+            </button>
+            <button class="option-btn" data-value="heart_pounding" onclick="selectMulti('q3', this)">
+              <span class="check"></span> I feel my heart pounding
+            </button>
+            <button class="option-btn" data-value="dry_mouth" onclick="selectMulti('q3', this)">
+              <span class="check"></span> I get a dry mouth or tight throat
+            </button>
+            <button class="option-btn" data-value="no_eye_contact" onclick="selectMulti('q3', this)">
+              <span class="check"></span> I avoid making eye contact
+            </button>
+          </div>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-back" onclick="goBack()">Back</button>
+          <button class="btn btn-next" id="next-2" disabled onclick="goNext()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Q4 -->
+      <div class="slide" data-slide="3">
+        <div class="question-card">
+          <div class="question-number">Question 4</div>
+          <div class="question-text">If you had to pick, what are the TWO hardest parts about giving a presentation?</div>
+          <div class="question-hint">Select exactly 2</div>
+          <div class="options" id="q4-options">
+            <button class="option-btn" data-value="audience_engaged" onclick="selectMultiMax('q4', this, 2)">
+              <span class="check"></span> Not knowing if the audience is engaged or bored
+            </button>
+            <button class="option-btn" data-value="losing_thought" onclick="selectMultiMax('q4', this, 2)">
+              <span class="check"></span> Losing my train of thought mid-sentence
+            </button>
+            <button class="option-btn" data-value="cant_control_nerves" onclick="selectMultiMax('q4', this, 2)">
+              <span class="check"></span> Not being able to control my nerves in the moment
+            </button>
+            <button class="option-btn" data-value="pacing" onclick="selectMultiMax('q4', this, 2)">
+              <span class="check"></span> Feeling like I'm talking too fast or too slow
+            </button>
+            <button class="option-btn" data-value="no_idea_how_come_across" onclick="selectMultiMax('q4', this, 2)">
+              <span class="check"></span> Having no idea how I actually come across to others
+            </button>
+            <button class="option-btn" data-value="days_before_anxiety" onclick="selectMultiMax('q4', this, 2)">
+              <span class="check"></span> Dealing with the anxiety in the days leading up to it
+            </button>
+          </div>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-back" onclick="goBack()">Back</button>
+          <button class="btn btn-next" id="next-3" disabled onclick="goNext()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Q5 -->
+      <div class="slide" data-slide="4">
+        <div class="question-card">
+          <div class="question-number">Question 5</div>
+          <div class="question-text">Have you ever tried anything to help with public speaking nerves? What actually worked — even a little?</div>
+          <div class="question-hint">Pick all that apply — no judgment!</div>
+          <div class="options" id="q5-options">
+            <button class="option-btn" data-value="mirror_record" onclick="selectMulti('q5', this)">
+              <span class="check"></span> Practiced in front of a mirror or recorded myself
+            </button>
+            <button class="option-btn" data-value="breathing" onclick="selectMulti('q5', this)">
+              <span class="check"></span> Used breathing exercises or meditation
+            </button>
+            <button class="option-btn" data-value="rehearsed_friend" onclick="selectMulti('q5', this)">
+              <span class="check"></span> Rehearsed with a friend or family member
+            </button>
+            <button class="option-btn" data-value="notes_teleprompter" onclick="selectMulti('q5', this)">
+              <span class="check"></span> Used note cards, a teleprompter, or slides as a safety net
+            </button>
+            <button class="option-btn" data-value="app_tool" onclick="selectMulti('q5', this)">
+              <span class="check"></span> Tried an app or online tool for speech coaching
+            </button>
+            <button class="option-btn" data-value="substance" onclick="selectMulti('q5', this)">
+              <span class="check"></span> Had a drink or took something to calm down
+            </button>
+            <button class="option-btn" data-value="white_knuckle" onclick="selectMulti('q5', this)">
+              <span class="check"></span> Nothing — I just white-knuckle it every time
+            </button>
+          </div>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-back" onclick="goBack()">Back</button>
+          <button class="btn btn-next" id="next-4" disabled onclick="goNext()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Q6 -->
+      <div class="slide" data-slide="5">
+        <div class="question-card">
+          <div class="question-number">Question 6</div>
+          <div class="question-text">Imagine lightweight glasses that could quietly help you while presenting. How useful would each feature be?</div>
+          <div class="question-hint">Rate each one</div>
+          <div class="likert-grid" id="q6-grid">
+            <div class="likert-row" data-key="slow_down">
+              <div class="likert-label">Subtle reminders to slow down or breathe</div>
+              <div class="likert-options">
+                <button class="likert-btn" data-value="not_useful" onclick="selectLikert(this)">Not useful</button>
+                <button class="likert-btn" data-value="slightly" onclick="selectLikert(this)">Slightly useful</button>
+                <button class="likert-btn" data-value="pretty" onclick="selectLikert(this)">Pretty useful</button>
+                <button class="likert-btn" data-value="game_changer" onclick="selectLikert(this)">Game-changer</button>
+              </div>
+            </div>
+            <div class="likert-row" data-key="talking_points">
+              <div class="likert-label">A tiny display showing your key talking points</div>
+              <div class="likert-options">
+                <button class="likert-btn" data-value="not_useful" onclick="selectLikert(this)">Not useful</button>
+                <button class="likert-btn" data-value="slightly" onclick="selectLikert(this)">Slightly useful</button>
+                <button class="likert-btn" data-value="pretty" onclick="selectLikert(this)">Pretty useful</button>
+                <button class="likert-btn" data-value="game_changer" onclick="selectLikert(this)">Game-changer</button>
+              </div>
+            </div>
+            <div class="likert-row" data-key="audience">
+              <div class="likert-label">Real-time read on how your audience is reacting</div>
+              <div class="likert-options">
+                <button class="likert-btn" data-value="not_useful" onclick="selectLikert(this)">Not useful</button>
+                <button class="likert-btn" data-value="slightly" onclick="selectLikert(this)">Slightly useful</button>
+                <button class="likert-btn" data-value="pretty" onclick="selectLikert(this)">Pretty useful</button>
+                <button class="likert-btn" data-value="game_changer" onclick="selectLikert(this)">Game-changer</button>
+              </div>
+            </div>
+            <div class="likert-row" data-key="voice_alert">
+              <div class="likert-label">A gentle alert if your voice is shaking or too quiet</div>
+              <div class="likert-options">
+                <button class="likert-btn" data-value="not_useful" onclick="selectLikert(this)">Not useful</button>
+                <button class="likert-btn" data-value="slightly" onclick="selectLikert(this)">Slightly useful</button>
+                <button class="likert-btn" data-value="pretty" onclick="selectLikert(this)">Pretty useful</button>
+                <button class="likert-btn" data-value="game_changer" onclick="selectLikert(this)">Game-changer</button>
+              </div>
+            </div>
+            <div class="likert-row" data-key="calming_cue">
+              <div class="likert-label">A calming cue (like a color or pattern) when stress spikes</div>
+              <div class="likert-options">
+                <button class="likert-btn" data-value="not_useful" onclick="selectLikert(this)">Not useful</button>
+                <button class="likert-btn" data-value="slightly" onclick="selectLikert(this)">Slightly useful</button>
+                <button class="likert-btn" data-value="pretty" onclick="selectLikert(this)">Pretty useful</button>
+                <button class="likert-btn" data-value="game_changer" onclick="selectLikert(this)">Game-changer</button>
+              </div>
+            </div>
+            <div class="likert-row" data-key="post_summary">
+              <div class="likert-label">Post-talk summary of how you did and what to improve</div>
+              <div class="likert-options">
+                <button class="likert-btn" data-value="not_useful" onclick="selectLikert(this)">Not useful</button>
+                <button class="likert-btn" data-value="slightly" onclick="selectLikert(this)">Slightly useful</button>
+                <button class="likert-btn" data-value="pretty" onclick="selectLikert(this)">Pretty useful</button>
+                <button class="likert-btn" data-value="game_changer" onclick="selectLikert(this)">Game-changer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-back" onclick="goBack()">Back</button>
+          <button class="btn btn-next" id="next-5" disabled onclick="goNext()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Q7 -->
+      <div class="slide" data-slide="6">
+        <div class="question-card">
+          <div class="question-number">Question 7 — Last one!</div>
+          <div class="question-text">If something could magically fix ONE thing about your public speaking experience, what would it be?</div>
+          <div class="question-hint">Write as much or as little as you'd like</div>
+          <textarea class="open-textarea" id="q7-text" placeholder="e.g. I wish I could stop my voice from shaking when I'm nervous..." oninput="checkQ7()"></textarea>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-back" onclick="goBack()">Back</button>
+          <button class="btn btn-submit" id="submitBtn" onclick="submitSurvey()">Submit Survey</button>
+        </div>
+      </div>
+
+      <!-- Thank you -->
+      <div class="slide" data-slide="7">
+        <div class="thank-you">
+          <div class="emoji">&#127881;</div>
+          <h2>Thank you so much!</h2>
+          <p>Your answers will directly shape the AR coaching glasses we're building at UIUC. You're helping make public speaking less scary for everyone.</p>
+          <p style="margin-top: 24px; font-size: 14px; color: #9aa0a6;">You can close this tab now.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ── State ──
+    const TOTAL = 7;
+    let current = 0;
+    const answers = {
+      q1: null,
+      q2: [],
+      q3: [],
+      q4: [],
+      q5: [],
+      q6_slow_down: null,
+      q6_talking_points: null,
+      q6_audience: null,
+      q6_voice_alert: null,
+      q6_calming_cue: null,
+      q6_post_summary: null,
+      q7: ''
+    };
+
+    // ── Build progress dots ──
+    const stepsEl = document.getElementById('progressSteps');
+    for (let i = 0; i < TOTAL; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
+      stepsEl.appendChild(dot);
+    }
+
+    function updateProgress() {
+      const dots = stepsEl.children;
+      for (let i = 0; i < TOTAL; i++) {
+        dots[i].className = 'progress-dot';
+        if (i === current) dots[i].classList.add('active');
+        else if (i < current) dots[i].classList.add('done');
+      }
+      document.getElementById('progressText').textContent =
+        current < TOTAL ? `Question ${current + 1} of ${TOTAL}` : '';
+    }
+
+    // ── Navigation ──
+    function goNext() {
+      if (current >= TOTAL) return;
+      const slides = document.querySelectorAll('.slide');
+      slides[current].classList.remove('active');
+      slides[current].classList.add('exit-left');
+      current++;
+      slides[current].classList.remove('enter-right');
+      slides[current].classList.add('active');
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (current === TOTAL) {
+        document.getElementById('progressContainer').style.display = 'none';
+        document.getElementById('surveyHeader').style.display = 'none';
+      }
+    }
+
+    function goBack() {
+      if (current <= 0) return;
+      const slides = document.querySelectorAll('.slide');
+      slides[current].classList.remove('active');
+      slides[current].classList.add('enter-right');
+      current--;
+      slides[current].classList.remove('exit-left');
+      slides[current].classList.add('active');
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Selection Logic ──
+    function selectSingle(qKey, btn) {
+      const parent = btn.parentElement;
+      parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      answers[qKey] = btn.dataset.value;
+      enableNext();
+    }
+
+    function selectMulti(qKey, btn) {
+      btn.classList.toggle('selected');
+      const selected = btn.parentElement.querySelectorAll('.option-btn.selected');
+      answers[qKey] = Array.from(selected).map(b => b.dataset.value);
+      enableNext();
+    }
+
+    function selectMultiMax(qKey, btn, max) {
+      if (!btn.classList.contains('selected')) {
+        const selected = btn.parentElement.querySelectorAll('.option-btn.selected');
+        if (selected.length >= max) return;
+      }
+      btn.classList.toggle('selected');
+      const selected = btn.parentElement.querySelectorAll('.option-btn.selected');
+      answers[qKey] = Array.from(selected).map(b => b.dataset.value);
+      enableNext();
+    }
+
+    function selectLikert(btn) {
+      const row = btn.closest('.likert-row');
+      row.querySelectorAll('.likert-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const key = row.dataset.key;
+      answers['q6_' + key] = btn.dataset.value;
+      enableNext();
+    }
+
+    function checkQ7() {
+      // Q7 is optional, submit is always enabled
+    }
+
+    // ── Enable/Disable Next ──
+    function enableNext() {
+      const idx = current;
+      const nextBtn = document.getElementById('next-' + idx);
+      if (!nextBtn) return;
+      let valid = false;
+      switch (idx) {
+        case 0: valid = !!answers.q1; break;
+        case 1: valid = answers.q2.length > 0; break;
+        case 2: valid = answers.q3.length > 0; break;
+        case 3: valid = answers.q4.length === 2; break;
+        case 4: valid = answers.q5.length > 0; break;
+        case 5:
+          valid = answers.q6_slow_down && answers.q6_talking_points &&
+                  answers.q6_audience && answers.q6_voice_alert &&
+                  answers.q6_calming_cue && answers.q6_post_summary;
+          break;
+      }
+      nextBtn.disabled = !valid;
+    }
+
+    // ── Submit ──
+    async function submitSurvey() {
+      answers.q7 = document.getElementById('q7-text').value.trim();
+      const btn = document.getElementById('submitBtn');
+      btn.textContent = 'Submitting...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(answers)
+        });
+        if (!res.ok) throw new Error('Server error');
+        goNext(); // go to thank-you
+      } catch (e) {
+        alert('Something went wrong. Please try again!');
+        btn.textContent = 'Submit Survey';
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
