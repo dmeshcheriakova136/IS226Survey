@@ -23,6 +23,7 @@
       position: fixed;
       z-index: 0;
       pointer-events: none;
+      opacity: 0.15;
       animation: blobFloat 8s ease-in-out infinite;
     }
     .blob-1 {
@@ -149,6 +150,11 @@
       border-radius: 3px;
       background: #e0e0e0;
       transition: background 0.5s ease, transform 0.3s ease;
+      cursor: pointer;
+    }
+    .progress-dot:hover {
+      background: #a8c7fa;
+      transform: scaleY(1.4);
     }
     .progress-dot.active {
       background: #4285F4;
@@ -348,6 +354,29 @@
       font-weight: 600;
     }
 
+    /* ── Other Input ── */
+    .other-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid #e8eaed;
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 15px;
+      color: #3c4043;
+      background: #fafafa;
+      outline: none;
+      margin-top: 4px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .other-input:focus {
+      border-color: #4285F4;
+      box-shadow: 0 0 0 3px rgba(66,133,244,0.15);
+      background: white;
+    }
+    .other-input::placeholder {
+      color: #bdc1c6;
+    }
+
     /* ── Textarea ── */
     .open-textarea {
       width: 100%;
@@ -482,7 +511,7 @@
     <div class="header" id="surveyHeader">
       <div class="tag">UIUC Spring 2026 Research</div>
       <h1>Help us revolutionize public speaking</h1>
-      <p>As partof our class project, we are building UI interface for AR glasses that help people feel confident while presenting This 3-minute survey shapes what we create. No wrong answers!</p>
+      <p>As part of our class project, we are building UI interface for AR glasses that help people feel confident while presenting. This 3-minute survey shapes what we create. No wrong answers!</p>
     </div>
 
     <!-- Progress -->
@@ -516,6 +545,10 @@
             <button class="option-btn" data-value="fear" onclick="selectSingle('q1', this)">
               <span class="radio"></span> It's one of my biggest fears, honestly
             </button>
+            <button class="option-btn" data-value="other" onclick="selectSingle('q1', this); toggleOtherInputSingle('q1')">
+              <span class="radio"></span> Other:
+            </button>
+            <input type="text" class="other-input" id="q1-other-input" placeholder="Describe your relationship with public speaking..." oninput="updateOtherValueSingle('q1')" style="display:none;">
           </div>
         </div>
         <div class="nav-buttons">
@@ -548,6 +581,10 @@
             <button class="option-btn" data-value="want_over" onclick="selectMulti('q2', this)">
               <span class="check"></span> "I just want this to be over"
             </button>
+            <button class="option-btn" data-value="other" onclick="selectMulti('q2', this); toggleOtherInput('q2')">
+              <span class="check"></span> Other
+            </button>
+            <input type="text" class="other-input" id="q2-other-input" placeholder="Tell us what was going through your mind..." oninput="updateOtherValue('q2')" style="display:none;">
           </div>
         </div>
         <div class="nav-buttons">
@@ -752,7 +789,7 @@
         <div class="thank-you">
           <div class="emoji">&#127881;</div>
           <h2>Thank you so much!</h2>
-          <p>Your answers will a team of college students at UIUC to build a better project based on real research.</p>
+          <p>Your answers will help a team of college students at UIUC to build a better project based on real research.</p>
           <p style="margin-top: 24px; font-size: 14px; color: #9aa0a6;">You can close this tab now.</p>
         </div>
       </div>
@@ -784,6 +821,7 @@
     for (let i = 0; i < TOTAL; i++) {
       const dot = document.createElement('div');
       dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
+      dot.addEventListener('click', () => goToSlide(i));
       stepsEl.appendChild(dot);
     }
 
@@ -827,12 +865,32 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function goToSlide(target) {
+      if (target === current || target < 0 || target >= TOTAL) return;
+      const slides = document.querySelectorAll('.slide');
+      const goingForward = target > current;
+      slides[current].classList.remove('active');
+      slides[current].classList.add(goingForward ? 'exit-left' : 'enter-right');
+      current = target;
+      slides[current].classList.remove('exit-left', 'enter-right');
+      slides[current].classList.add('active');
+      updateProgress();
+      enableNext();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     // ── Selection Logic ──
     function selectSingle(qKey, btn) {
       const parent = btn.parentElement;
       parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       answers[qKey] = btn.dataset.value;
+      // Hide other input if a non-other option was picked
+      const otherInput = document.getElementById(`${qKey}-other-input`);
+      if (otherInput && btn.dataset.value !== 'other') {
+        otherInput.style.display = 'none';
+        otherInput.value = '';
+      }
       enableNext();
     }
 
@@ -860,6 +918,53 @@
       btn.classList.add('selected');
       const key = row.dataset.key;
       answers['q6_' + key] = btn.dataset.value;
+      enableNext();
+    }
+
+    function toggleOtherInput(qKey) {
+      const otherBtn = document.querySelector(`#${qKey}-options .option-btn[data-value="other"]`);
+      const otherInput = document.getElementById(`${qKey}-other-input`);
+      if (otherBtn.classList.contains('selected')) {
+        otherInput.style.display = 'block';
+        otherInput.focus();
+      } else {
+        otherInput.style.display = 'none';
+        otherInput.value = '';
+        // Remove any "other:..." entry from answers
+        answers[qKey] = answers[qKey].filter(v => !v.startsWith('other:'));
+        enableNext();
+      }
+    }
+
+    function updateOtherValue(qKey) {
+      const otherInput = document.getElementById(`${qKey}-other-input`);
+      const text = otherInput.value.trim();
+      // Remove old other entry, add new one
+      answers[qKey] = answers[qKey].filter(v => !v.startsWith('other:') && v !== 'other');
+      if (text) {
+        answers[qKey].push('other:' + text);
+      } else {
+        answers[qKey].push('other');
+      }
+      enableNext();
+    }
+
+    function toggleOtherInputSingle(qKey) {
+      const otherBtn = document.querySelector(`#${qKey}-options .option-btn[data-value="other"]`);
+      const otherInput = document.getElementById(`${qKey}-other-input`);
+      if (otherBtn.classList.contains('selected')) {
+        otherInput.style.display = 'block';
+        otherInput.focus();
+      } else {
+        otherInput.style.display = 'none';
+        otherInput.value = '';
+      }
+    }
+
+    function updateOtherValueSingle(qKey) {
+      const otherInput = document.getElementById(`${qKey}-other-input`);
+      const text = otherInput.value.trim();
+      answers[qKey] = text ? 'other:' + text : 'other';
       enableNext();
     }
 

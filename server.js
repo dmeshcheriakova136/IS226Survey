@@ -73,6 +73,58 @@ app.get('/api/results', (req, res) => {
   res.json(rows);
 });
 
+// Export CSV
+app.get('/api/export-csv', (req, res) => {
+  const rows = db.prepare('SELECT * FROM responses ORDER BY submitted_at DESC').all();
+
+  const headers = {
+    id: 'ID',
+    q1_relationship: 'Q1: Relationship with public speaking',
+    q2_thoughts: 'Q2: Thoughts before speaking',
+    q3_body: 'Q3: Physical symptoms',
+    q4_hardest: 'Q4: Two hardest parts',
+    q5_coping: 'Q5: Coping strategies tried',
+    q6_slow_down: 'Q6a: Reminders to slow down/breathe',
+    q6_talking_points: 'Q6b: Talking points display',
+    q6_audience: 'Q6c: Audience reaction read',
+    q6_voice_alert: 'Q6d: Voice shaking alert',
+    q6_calming_cue: 'Q6e: Calming cue',
+    q6_post_summary: 'Q6f: Post-talk summary',
+    q7_magic_fix: 'Q7: Magic fix',
+    submitted_at: 'Submitted At'
+  };
+
+  const jsonCols = ['q2_thoughts', 'q3_body', 'q4_hardest', 'q5_coping'];
+  const cols = Object.keys(headers);
+
+  function escapeCSV(val) {
+    const str = String(val == null ? '' : val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  }
+
+  const csvRows = [cols.map(c => escapeCSV(headers[c])).join(',')];
+
+  for (const row of rows) {
+    csvRows.push(cols.map(c => {
+      let val = row[c];
+      if (jsonCols.includes(c)) {
+        try {
+          const arr = JSON.parse(val);
+          if (Array.isArray(arr)) val = arr.join('; ');
+        } catch {}
+      }
+      return escapeCSV(val);
+    }).join(','));
+  }
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="survey-responses.csv"');
+  res.send(csvRows.join('\n'));
+});
+
 // Results count
 app.get('/api/count', (req, res) => {
   const row = db.prepare('SELECT COUNT(*) as count FROM responses').get();
